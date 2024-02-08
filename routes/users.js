@@ -13,8 +13,19 @@ router.get('/', function(req, res) {
 });
 
 /* GET specific user */
-router.get('/', function(req, res) {
-  res.send('respond with a resource');
+router.get('/user', function(req, res) {
+  let findUser = req.body.name;
+  console.log("find user", findUser);
+  res.send(findUser);
+});
+
+/* POST create user */
+router.post('/add', function(req, res) {
+  let newUser = {
+    "name": req.body.name,
+  }
+  console.log("new user", newUser);
+  res.json(newUser);
 });
 
 module.exports = router;
