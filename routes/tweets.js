@@ -3,8 +3,8 @@ var router = express.Router();
 
 let tweets = [
   {
-    'user': 'Janne',
-    'tweets': [
+    user: 'Janne',
+    tweets: [
       {
         'tweet':
           'Duis ac nibh. Fusce lacus purus, aliquet at, feugiat non, pretium quis, lectus. Suspendisse potenti. In eleifend quam a odio. In hac habitasse platea dictumst.',
@@ -56,6 +56,25 @@ router.get('/all', function (req, res, next) {
 router.post('/tweet', (req, res) => {
   console.log(req.body);
   res.json({ user: req.body });
+});
+
+router.post('/add', (req, res) => {
+  if (req.body) {
+    const user = tweets.find((user) => {
+      return user.user === req.body.name;
+    });
+    if (user) {
+      console.log(user.tweets);
+      user.tweets.push({ tweet: req.body.tweet });
+      res.json({ user: user.tweets });
+    } else {
+      res.json({ err: 'could not find user' });
+    }
+    res.send('hej');
+  } else {
+    console.log('cat find body');
+    res.status(500).json({ err: 'error finding body' });
+  }
 });
 
 module.exports = router;
