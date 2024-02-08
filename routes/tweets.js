@@ -70,7 +70,7 @@ router.post('/add', (req, res) => {
     } else {
       res.json({ err: 'could not find user' });
     }
-    res.send('hej');
+
   } else {
     console.log('cat find body');
     res.status(500).json({ err: 'error finding body' });
