@@ -7,7 +7,8 @@ let users = [
 
 /* GET all users */
 router.get('/', function(req, res) {
-  res.send('users');
+  console.log("users", users);
+  res.send(users);
 
 });
 
