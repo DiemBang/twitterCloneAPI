@@ -48,10 +48,14 @@ let tweets = [
     ],
   },
 ];
-/* GET users listing. */
 router.get('/all', function (req, res, next) {
   console.log('tweets', tweets);
   res.json(tweets);
+});
+
+router.post('/tweet', (req, res) => {
+  console.log(req.body);
+  res.json({ user: req.body });
 });
 
 module.exports = router;
