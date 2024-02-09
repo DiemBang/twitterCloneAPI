@@ -1,49 +1,20 @@
 var express = require('express');
 var router = express.Router();
+const OpenAI = require("openai");
+
+const openai = new OpenAI({
+  apiKey: process.env["AI_API_KEY"],
+})
 
 let tweets = [
   {
     user: 'Janne',
     tweets: [
       {
-        'tweet':
+          'tweet':
           'Duis ac nibh. Fusce lacus purus, aliquet at, feugiat non, pretium quis, lectus. Suspendisse potenti. In eleifend quam a odio. In hac habitasse platea dictumst.',
-      },
-      {
-        'tweet':
-          'Nullam molestie nibh in lectus. Pellentesque at nulla. Suspendisse potenti. Cras in purus eu magna vulputate luctus.',
-      },
-      {
-        'tweet':
-          'Aliquam non mauris. Morbi non lectus. Aliquam sit amet diam in magna bibendum imperdiet. Nullam orci pede, venenatis non, sodales sed, tincidunt eu, felis. Fusce posuere felis sed lacus. Morbi sem mauris, laoreet ut, rhoncus aliquet, pulvinar sed, nisl. Nunc rhoncus dui vel sem.',
-      },
-      {
-        'tweet':
-          'Suspendisse ornare consequat lectus. In est risus, auctor sed, tristique in, tempus sit amet, sem. Fusce consequat.',
-      },
-      {
-        'tweet':
-          'Vestibulum rutrum rutrum neque. Aenean auctor gravida sem. Praesent id massa id nisl venenatis lacinia. Aenean sit amet justo. Morbi ut odio. Cras mi pede, malesuada in, imperdiet et, commodo vulputate, justo. In blandit ultrices enim. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Proin interdum mauris non ligula pellentesque ultrices.',
-      },
-      {
-        'tweet':
-          'Aliquam erat volutpat. In congue. Etiam justo. Etiam pretium iaculis justo. In hac habitasse platea dictumst. Etiam faucibus cursus urna.',
-      },
-      {
-        'tweet':
-          'Morbi ut odio. Cras mi pede, malesuada in, imperdiet et, commodo vulputate, justo. In blandit ultrices enim. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Proin interdum mauris non ligula pellentesque ultrices. Phasellus id sapien in sapien iaculis congue. Vivamus metus arcu, adipiscing molestie, hendrerit at, vulputate vitae, nisl. Aenean lectus. Pellentesque eget nunc. Donec quis orci eget orci vehicula condimentum.',
-      },
-      {
-        'tweet':
-          'Integer a nibh. In quis justo. Maecenas rhoncus aliquam lacus. Morbi quis tortor id nulla ultrices aliquet. Maecenas leo odio, condimentum id, luctus nec, molestie sed, justo. Pellentesque viverra pede ac diam. Cras pellentesque volutpat dui. Maecenas tristique, est et tempus semper, est quam pharetra magna, ac consequat metus sapien ut nunc. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Mauris viverra diam vitae quam.',
-      },
-      {
-        'tweet':
-          'Nunc nisl. Duis bibendum, felis sed interdum venenatis, turpis enim blandit mi, in porttitor pede justo eu massa. Donec dapibus. Duis at velit eu est congue elementum. In hac habitasse platea dictumst. Morbi vestibulum, velit id pretium iaculis, diam erat fermentum justo, nec condimentum neque sapien placerat ante. Nulla justo.',
-      },
-      {
-        'tweet':
-          'Quisque id justo sit amet sapien dignissim vestibulum. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Nulla dapibus dolor vel est. Donec odio justo, sollicitudin ut, suscipit a, feugiat et, eros. Vestibulum ac est lacinia nisi venenatis tristique. Fusce congue, diam id ornare imperdiet, sapien urna pretium nisl, ut volutpat sapien arcu sed augue. Aliquam erat volutpat.',
+          'name': '',
+          'answer': ''
       },
     ],
   },
@@ -58,23 +29,50 @@ router.post('/tweet', (req, res) => {
   res.json({ user: req.body });
 });
 
-router.post('/add', (req, res) => {
-  if (req.body) {
-    const user = tweets.find((user) => {
-      return user.user === req.body.name;
-    });
-    if (user) {
-      console.log(user.tweets);
-      user.tweets.push({ tweet: req.body.tweet });
-      res.json({ user: user.tweets });
-    } else {
-      res.json({ err: 'could not find user' });
-    }
+let chat = [
+  {id: 1, message: "hello world", name: "Janne"}
+]
 
-  } else {
-    console.log('cat find body');
-    res.status(500).json({ err: 'error finding body' });
+router.post('/add', async (req, res) => {
+  let newChat = {
+    id: chat.length + 1,
+    message: req.body.message,
+    name: req.body.name
   }
+
+  //SPARAT TILL DB
+
+  chat.push(newChat);
+
+  try {
+
+    await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {role: "system", content: "Du är ett bergstroll som hatar människor. Du är vresig och irriterad och lägger dig i allt som sägs."},
+        {role: "user", content: req.body.message}
+      ]
+    })
+    .then(data => {
+      console.log("ai svar", data.choices[0].message.content);
+
+      let aiChat = {
+        id: chat.length + 1,
+        message: data.choices[0].message.content,
+        name: "Bergstrollet Engvar"
+      }
+
+      chat.push(aiChat);
+      //req.app.locals.db.collection.insertOne(aiChat) 
+
+    })
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({message: "Something went wrong"});
+  }
+
+  res.json(tweets);
 });
 
 module.exports = router;
